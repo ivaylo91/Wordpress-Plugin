@@ -6,6 +6,13 @@
  * Author name: Ivaylo Penev
  */
 
+define( 'DXP_VERSION', '1.6' );
+define( 'DXP_PATH', dirname( __FILE__ ) );
+define( 'DXP_PATH_INCLUDES', dirname( __FILE__ ) . '/inc' );
+define( 'DXP_FOLDER', basename( DXP_PATH ) );
+define( 'DXP_URL', plugins_url() . '/' . DXP_FOLDER );
+define( 'DXP_URL_INCLUDES', DXP_URL . '/inc' );
+
 if (!class_exists('My_Plugin')) {
 
     class My_Plugin
@@ -20,20 +27,68 @@ if (!class_exists('My_Plugin')) {
 
             add_action('save_post', array($this, 'save'));
 
-            add_action('save_audio', array($this, 'save_custom_file'));
+            add_action('post_edit_form_tag', array($this, 'save_custom_file'));
 
             add_action('init', array($this, 'shortcode'));
 
+            add_action('widgets_init', array($this, 'simple_event_widget'));
 
         }
 
-        public function shortcode()
+        public function simple_event_widget()
+        {
+            include_once DXP_PATH_INCLUDES . '/event-widget.class.php';
+        }
+
+        public function save_custom_file($post_id)
+        {
+            global $post;
+            if (!empty($_FILES['add_custom_file'])) {
+
+                $file = $_FILES['add_custom_file'];
+
+                $upload = wp_handle_upload($file, array('test_form' => false));
+
+                if (!isset($upload['error']) && isset($upload['error']) != 0) {
+                    $filetype = wp_check_filetype(basename($upload['file']), null);
+                    $title = $file['name'];
+                    $attachment = array(
+                        'post_mime_type' => $filetype,
+                        'post_title' => addslashes_gpc($title),
+                        'post_content' => '',
+                        'post_status' => 'inherit',
+                        'post_parent' => $post->ID
+                    );
+                    $attach_id = wp_insert_attachment($attachment, $upload['file']);
+
+                    update_post_meta($post->ID, 'add_custom_file', $attach_id);
+                }
+            }
+        }
+
+        public function attach_custom_file($post)
+        {
+            $file = '';
+            if (!empty($post)) {
+
+                $file = get_post_meta($post->id, 'add_custom_file', true);
+            }
+            ?>
+            <form enctype="multipart/form-data" method="post">
+                <input type="file" name="add_custom_file" id="add_custom_file" value="<?php echo $file; ?>"/>
+            </form>
+            <?php
+        }
+
+        public
+        function shortcode()
         {
             add_shortcode('episode', array($this, 'shortcode_cb'));
 
         }
 
-        public function shortcode_cb($args)
+        public
+        function shortcode_cb($args)
         {
             $out = "";
 
@@ -56,46 +111,13 @@ if (!class_exists('My_Plugin')) {
             return $out;
         }
 
-        public function save_custom_file($post_id)
+
+        public
+        function save($post_id)
         {
-            $upload_file = "";
-
-            if (!empty($_FILES['add_custom_file'])) {
-
-                $upload_file = wp_upload_bits($_FILES['add_custom_file']['name'], null, wp_remote_get($_FILES['add_custom_file']['tmp_name']));
-            }
-
-                update_post_meta($post_id, 'add_custom-file', $upload_file);
-
-        }
-
-
-        public function attach_custom_file_cb($post)
-        {
-            $custom_file = "";
-
-            if (!empty($_FILES['add_custom_file']['name'])) {
-
-                $custom_file = get_post_meta($post->ID, 'add_custom_file', true);
-            }
-            ?>
-            <form enctype="multipart/form-data" method="post">
-
-                <input type="file" name="add_custom_file" id="add_custom_file" value="<?php echo $custom_file; ?>"/>
-
-            </form>
-            <?php
-        }
-
-        public function save($post_id)
-        {
-            if (defined('DOING_AJAX') && DOING_AJAX) {
+            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
 
                 return $post_id;
-            }
-            if (isset($_POST['add_info'])) {
-
-                update_post_meta($post_id, 'add_info', esc_html($_POST['add_info']));
             }
 
             return $post_id;
@@ -134,16 +156,16 @@ if (!class_exists('My_Plugin')) {
 
         }
 
-        public function meta_box()
+        public
+        function meta_box()
         {
 
             add_meta_box('meta_box', 'Additional info', array($this, 'meta_box_cb'), 'episode');
 
-            add_meta_box('add_custom_file', 'Upload File', array($this, 'attach_custom_file_cb'), 'episode');
+            add_meta_box('add_custom_file', 'Upload File', array($this, 'attach_custom_file'), 'episode');
         }
 
-        public
-        function meta_box_cb($post)
+        public function meta_box_cb($post)
 
         {
             $add_info = " ";
@@ -161,8 +183,7 @@ if (!class_exists('My_Plugin')) {
             <?php
         }
 
-        public
-        function register_episode()
+        public function register_episode()
         {
             register_post_type('Episode', array(
                 'labels' => array(
