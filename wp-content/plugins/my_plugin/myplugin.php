@@ -112,19 +112,20 @@ if (!class_exists('My_Plugin')) {
         }
 
 
-        public
-        function save($post_id)
+        public function save($post_id)
         {
-            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+            if (defined('DOING_AJAX') && DOING_AJAX) {
 
                 return $post_id;
             }
+            if (isset($_POST['add_info'])) {
 
+                update_post_meta($post_id, 'add_info', $_POST['add_info']);
+            }
             return $post_id;
         }
 
-        public
-        function custom_taxonomies()
+        public function custom_taxonomies()
         {
 
             register_taxonomy('custom_taxonomies', 'episode', array(
