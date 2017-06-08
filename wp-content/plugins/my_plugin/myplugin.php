@@ -31,15 +31,15 @@ if (!class_exists('My_Plugin')) {
         }
         public function custom_file_cb($post)
         {
-            $get = '';
-
-            if (!empty($post)) {
-
-                $get = get_post_meta($post->ID, 'add_file', true);
-            }
+             $custom_image = get_post_custom($post->ID);
+            
             ?>
-            <input type="file" name="add_file" id="add_file" value="<?php echo $get; ?>">
-            <?php
+            
+             <input type="file" name="add_file" id="add_file">
+            
+            <img src="<?php echo $custom_image['add_file'][0]; ?>" alt="custom_file" width="250" height="250">
+            
+             <?php
         }
 
         public function save_custom_file($post_id)
