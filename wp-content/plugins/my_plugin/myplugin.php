@@ -38,14 +38,12 @@ if (!class_exists('My_Plugin')) {
             <?php
         }
 
-        public
-        function shortcode()
+        public function shortcode()
         {
             add_shortcode('episode', array($this, 'shortcode_cb'));
         }
 
-        public
-        function shortcode_cb($args)
+        public function shortcode_cb($args)
         {
             $out = "";
 
