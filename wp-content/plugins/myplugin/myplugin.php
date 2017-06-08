@@ -18,28 +18,35 @@ if (!class_exists('My_Plugin')) {
         public function __construct()
         {
             add_action('init', array($this, 'register_episode'));
-            
+
             add_action('add_meta_boxes', array($this, 'meta_box'));
-            
+
             add_action('init', array($this, 'custom_taxonomies'));
-            
+
             add_action('save_post', array($this, 'save'));
-            
+
             add_action('init', array($this, 'shortcode'));
 
             add_action('save_post', array($this, 'save_custom_file'));
+
+            add_action('widgets_init', array($this, 'sample_widget'));
+
+        }
+        public function sample_widget(){
+
+            include DXP_PATH_INCLUDES . '/sample-widget.class.php';
         }
         public function custom_file_cb($post)
         {
-             $custom_image = get_post_custom($post->ID);
-            
+            $custom_image = get_post_custom($post->ID);
+
             ?>
-            
-             <input type="file" name="add_file" id="add_file">
-            
+
+            <input type="file" name="add_file" id="add_file">
+
             <img src="<?php echo $custom_image['add_file'][0]; ?>" alt="custom_file" width="250" height="250">
-            
-             <?php
+
+            <?php
         }
 
         public function save_custom_file($post_id)
@@ -133,7 +140,7 @@ if (!class_exists('My_Plugin')) {
         {
             add_meta_box('meta_box', 'Additional info', array($this, 'meta_box_cb'), 'episodes');
 
-           add_meta_box('custom_file', 'Custom File', array($this, 'custom_file_cb'), 'episodes');
+            add_meta_box('custom_file', 'Custom File', array($this, 'custom_file_cb'), 'episodes');
         }
 
         public function meta_box_cb($post)
