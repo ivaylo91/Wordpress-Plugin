@@ -18,11 +18,38 @@ if (!class_exists('My_Plugin')) {
         public function __construct()
         {
             add_action('init', array($this, 'register_episode'));
+            
             add_action('add_meta_boxes', array($this, 'meta_box'));
+            
             add_action('init', array($this, 'custom_taxonomies'));
+            
             add_action('save_post', array($this, 'save'));
+            
             add_action('init', array($this, 'shortcode'));
 
+            add_action('save_post', array($this, 'save_custom_file'));
+        }
+        public function custom_file_cb($post)
+        {
+            $get = '';
+
+            if (!empty($post)) {
+
+                $get = get_post_meta($post->ID, 'add_file', true);
+            }
+            ?>
+            <input type="file" name="add_file" id="add_file" value="<?php echo $get; ?>">
+            <?php
+        }
+
+        public function save_custom_file($post_id)
+        {
+            if (isset($_POST['add_file'])) {
+
+                update_post_meta($post_id, 'add_file', $_POST['add_file']);
+            }
+
+            return $post_id;
         }
 
         public function attach_custom_file($post)
@@ -75,7 +102,7 @@ if (!class_exists('My_Plugin')) {
 
         public function custom_taxonomies()
         {
-            register_taxonomy('custom_taxonomies', 'episode', array(
+            register_taxonomy('custom_taxonomies', 'episodes', array(
                 'hierarchical' => true,
                 'labels' => array(
                     'name' => 'Podcast Types',
@@ -98,15 +125,15 @@ if (!class_exists('My_Plugin')) {
                 'query_var' => true,
                 'rewrite' => array('slug' => 'podcast type')
             ));
-            register_taxonomy_for_object_type('custom_taxonomies', 'episode');
+            register_taxonomy_for_object_type('custom_taxonomies', 'episodes');
         }
 
         public
         function meta_box()
         {
-            add_meta_box('meta_box', 'Additional info', array($this, 'meta_box_cb'), 'episode');
+            add_meta_box('meta_box', 'Additional info', array($this, 'meta_box_cb'), 'episodes');
 
-            add_meta_box('add_custom_file', 'Upload File', array($this, 'attach_custom_file'), 'episode');
+           add_meta_box('custom_file', 'Custom File', array($this, 'custom_file_cb'), 'episodes');
         }
 
         public function meta_box_cb($post)
@@ -125,7 +152,7 @@ if (!class_exists('My_Plugin')) {
 
         public function register_episode()
         {
-            register_post_type('Episode', array(
+            register_post_type('Episodes', array(
                 'labels' => array(
                     'name' => 'Episodes',
                     'singular_name' => 'Episode'
